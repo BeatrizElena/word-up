@@ -115,7 +115,7 @@ function render() {
 
     // TODO 2
     // Update the curent time remaining on the scoreboard.
-
+	$("#current-time").text(currentTime());
 
     // if the game has not started yet, just hide the #game container and exit
     if (model.gameHasStarted == false) {
@@ -146,8 +146,11 @@ function render() {
     // Set the value of the textbox
     $("#textbox").val(model.currentAttempt);
     // TODO 3
-    // Give focus to the textbox.
-
+    // Give focus to the textbox.  //////////NOT WORKING///////
+	$(document).ready(function(){
+    	$("#new-game-button").click(function(){
+        	$("#textbox").focus();
+    });  
 
     // if the current word attempt contains disallowed letters,
     var disallowedLetters = disallowedLettersInWord(model.currentAttempt);
