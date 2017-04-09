@@ -55,9 +55,13 @@ function addNewWordSubmission(word) {
     // TODO 21
     // replace the hardcoded 'false' with the real answer
 // 		(filter function from http://mikeheavers.com/tutorials/removing_duplicates_in_an_array_using_javascript/)
-	 var alreadyUsed = model.wordSubmissions.filter(function(submission, word) {
-  		return model.wordSubmissions.indexOf(submission) == word;
-	}).length > 0;
+// 	 var alreadyUsed = model.wordSubmissions.filter(function(submission, word) {
+//   		return model.wordSubmissions.indexOf(submission) == word;
+// 	}).length > 0; ////not working
+	var alreadyUsed = model.wordSubmissions.filter(function(submission){
+		return submission.word == word;
+	}).length > 0; 
+	
 
     // if the word is valid and hasn't already been used, add it
     if (containsOnlyAllowedLetters(word) && alreadyUsed == false) {
@@ -210,7 +214,7 @@ function wordSubmissionChip(wordSubmission) {
 
     // if we know the status of this word (real word or not), then add a green score or red X
     if (wordSubmission.hasOwnProperty("isRealWord")) {
-        var scoreChip = $("<span></span>").text("⟐");
+        var scoreChip = $("<span></span>");
         // TODO 17
         // give the scoreChip appropriate text content
 		if (wordSubmission.isRealWord){
