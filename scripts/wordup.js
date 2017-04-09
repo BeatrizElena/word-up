@@ -1,7 +1,8 @@
 
 
 // ----------------- MODEL -----------------
-
+// Model represents the data as an array and has methods that change the array (the data).
+// In the Model section, we put the data we need to keep track of.
 var GAME_DURATION = 60;
 
 // all the stuff we need to keep track of
@@ -53,7 +54,10 @@ function addNewWordSubmission(word) {
     // Do we already have a wordSubmission with this word?
     // TODO 21
     // replace the hardcoded 'false' with the real answer
-    var alreadyUsed = false;
+// 		(filter function from http://mikeheavers.com/tutorials/removing_duplicates_in_an_array_using_javascript/)
+	 var alreadyUsed = model.wordSubmissions.filter(function(submission, word) {
+  		return model.wordSubmissions.indexOf(submission) == word;
+	}).length > 0;
 
     // if the word is valid and hasn't already been used, add it
     if (containsOnlyAllowedLetters(word) && alreadyUsed == false) {
@@ -74,7 +78,7 @@ function checkIfWordIsReal(word) {
     // make an AJAX call to the Pearson API
     $.ajax({
         // TODO 13 what should the url be?
-        url: "www.todo13.com",
+        url: "http://api.pearson.com/v2/dictionaries/lasde/entries?headword=" + word,
         success: function(response) {
             console.log("We received a response from Pearson!");
 
@@ -85,12 +89,15 @@ function checkIfWordIsReal(word) {
             // Replace the 'true' below.
             // If the response contains any results, then the word is legitimate.
             // Otherwise, it is not.
-            var theAnswer = true;
-
+            var theAnswer = response.results.length > 0;
+			console.log("Is the word real?", theAnswer);
             // TODO 15
             // Update the corresponding wordSubmission in the model
-
-
+			model.wordSubmissions.forEach(function(submission) {
+				if (submission.word === word){
+					submission.isRealWord = theAnswer;
+					}
+			});
             // re-render
             render();
         },
@@ -102,7 +109,7 @@ function checkIfWordIsReal(word) {
 
 
 // ----------------- VIEW -----------------
-
+// View manipulates the DOM. Shows the current state of the WordUp game.
 /**
  * Updates everything on screen based on the current state of the model
  */
@@ -115,7 +122,7 @@ function render() {
 
     // TODO 2
     // Update the curent time remaining on the scoreboard.
-	$("#current-time").text(currentTime());
+	$("#time-remaining").text(model.secondsRemaining);
 
     // if the game has not started yet, just hide the #game container and exit
     if (model.gameHasStarted == false) {
@@ -126,8 +133,10 @@ function render() {
     // GAME -------------------------------------
 
     // clear stuff
+    $("#textbox").removeClass("bad-attempt").attr("disabled", false);
     $("#allowed-letters").empty();
     $("#word-submissions").empty();
+    $(".disallowed-letter").remove();
     // TODO 10
     // Add a few things to the above code block (underneath "// clear stuff").
 
@@ -141,16 +150,12 @@ function render() {
 
     // TODO 11
     // Render the word submissions
-
+	$("#word-submissions").append(model.wordSubmissions.map(wordSubmissionChip));
 
     // Set the value of the textbox
-    $("#textbox").val(model.currentAttempt);
+    $("#textbox").val(model.currentAttempt).focus();
     // TODO 3
-    // Give focus to the textbox.  //////////NOT WORKING///////
-	$(document).ready(function(){
-    	$("#new-game-button").click(function(){
-        	$("#textbox").focus();
-    });  
+    // Give focus to the textbox.
 
     // if the current word attempt contains disallowed letters,
     var disallowedLetters = disallowedLettersInWord(model.currentAttempt);
@@ -163,7 +168,7 @@ function render() {
 
         // TODO 8
         // append the red letter chips to the form
-
+		$("#word-attempt-form").append(redLetterChips);
     }
 
     // if the game is over
@@ -171,7 +176,7 @@ function render() {
     if (gameOver) {
         // TODO 9
         // disable the text box and clear its contents
-
+		$("#textbox").attr("disabled", true).val("");
     }
 }
 
@@ -208,13 +213,21 @@ function wordSubmissionChip(wordSubmission) {
         var scoreChip = $("<span></span>").text("⟐");
         // TODO 17
         // give the scoreChip appropriate text content
-
+		if (wordSubmission.isRealWord){
+			var score = wordScore(wordSubmission.word);
+		} else {
+			score = "X";
+		}
+		scoreChip = $("<span></span>").text(" " + score);
         // TODO 18
         // give the scoreChip appropriate css classes
-
+		scoreChip
+			.attr("class", "tag tag-sm")
+			.addClass(wordSubmission.isRealWord ? "tag-primary": "tag-danger");
+		
         // TODO 16
         // append scoreChip into wordChip
-
+		wordChip.append(scoreChip);
     }
 
     return wordChip;
@@ -245,6 +258,10 @@ $(document).ready(function() {
     // Add another event handler with a callback function.
     // When the textbox content changes,
     // update the .currentAttempt property of the model and re-render
+    $("#textbox").on("input", function() {	
+    	model.currentAttempt = $("#textbox").val();
+    	render();
+    }); //end of todo 6 - event handler
 
 
     // when the form is submitted
@@ -283,7 +300,7 @@ function isDisallowedLetter(letter) {
     // TODO 7
     // This should return true if the letter is not an element of
     // the .allowedLetters list in the model
-    return false;
+    return model.allowedLetters.indexOf(letter) == -1;
 }
 
 /**
@@ -302,7 +319,7 @@ function disallowedLettersInWord(word) {
 function containsOnlyAllowedLetters(word) {
     // TODO 12
     // Return the actual answer.
-    return true;
+    return disallowedLettersInWord(word).length == 0;
 }
 
 /**
@@ -333,7 +350,7 @@ function wordScore(word) {
     // TODO 19
     // Replace the empty list below.
     // Map the list of letters into a list of scores, one for each letter.
-    var letterScores = [];
+    var letterScores = letters.map(letterScore);
 
     // return the total sum of the letter scores
     return letterScores.reduce(add, 0);
@@ -357,7 +374,7 @@ function currentScore() {
 
     // TODO 20
     // return the total sum of the word scores
-    return 0;
+    return wordScores.reduce(add, 0);
 }
 
 
