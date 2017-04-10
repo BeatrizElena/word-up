@@ -381,6 +381,10 @@ function currentScore() {
     return wordScores.reduce(add, 0);
 }
 
+// Extra: Function for checking for vowels (the i flag is for case-insensitive matching)
+function vowelTest(s) {
+  return (/^[aeiou]$/i).test(s);
+}
 
 // ----------------- UTILS -----------------
 
